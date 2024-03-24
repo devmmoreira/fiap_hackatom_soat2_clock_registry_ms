@@ -1,0 +1,39 @@
+version: "3"
+services:
+  clock-sign-registry-ms:
+    container_name: "clock-sign-registry-ms"
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: npm run prod:server
+    working_dir: /home/node/app
+    expose:
+      - "12968"
+    ports: 
+      - "12968:12968"
+    depends_on:
+      clock-sign-pg:
+        condition: service_healthy
+    restart: always
+    networks:
+      - api-network
+  
+  clock-sign-pg:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: "database_password"
+      POSTGRES_USER: postgres
+      POSTGRES_DB: clock_sign
+    ports:
+      - "5432:5432"
+    networks:
+      - api-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+networks:
+  api-network:
+    driver: bridge
